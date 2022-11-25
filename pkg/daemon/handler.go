@@ -54,6 +54,7 @@ func (csh cniServerHandler) providerExists(provider string) bool {
 	return false
 }
 
+// 处理 CNI 发送的添加请求
 func (csh cniServerHandler) handleAdd(req *restful.Request, resp *restful.Response) {
 	podRequest := request.CniRequest{}
 	if err := req.ReadEntity(&podRequest); err != nil {
@@ -132,6 +133,7 @@ func (csh cniServerHandler) handleAdd(req *restful.Request, resp *restful.Respon
 		if podRequest.DeviceID != "" {
 			nicType = util.OffloadType
 		} else if podRequest.VhostUserSocketVolumeName != "" {
+			// 当 VhostUserSocketVolumeName 不为空的时候，nicType 为 DPDK
 			nicType = util.DpdkType
 			if err = createShortSharedDir(pod, podRequest.VhostUserSocketVolumeName); err != nil {
 				klog.Error(err.Error())
@@ -141,6 +143,7 @@ func (csh cniServerHandler) handleAdd(req *restful.Request, resp *restful.Respon
 				return
 			}
 		} else {
+			// 其余按照 pod annotation 中的设置来确定 nicType
 			nicType = pod.Annotations[fmt.Sprintf(util.PodNicAnnotationTemplate, podRequest.Provider)]
 		}
 
@@ -297,6 +300,8 @@ func (csh cniServerHandler) handleAdd(req *restful.Request, resp *restful.Respon
 		if nicType == util.InternalType {
 			podNicName, err = csh.configureNicWithInternalPort(podRequest.PodName, podRequest.PodNamespace, podRequest.Provider, podRequest.NetNs, podRequest.ContainerID, ifName, macAddr, mtu, ipAddr, gw, isDefaultRoute, allRoutes, podRequest.DNS.Nameservers, podRequest.DNS.Search, ingress, egress, priority, podRequest.DeviceID, nicType, latency, limit, loss, gatewayCheckMode)
 		} else if nicType == util.DpdkType {
+			// 配置 DPDK 网络
+			// DPDK 模式下没有 podNicName
 			err = csh.configureDpdkNic(podRequest.PodName, podRequest.PodNamespace, podRequest.Provider, podRequest.NetNs, podRequest.ContainerID, ifName, macAddr, mtu, ipAddr, gw, ingress, egress, priority, getShortSharedDir(pod.UID, podRequest.VhostUserSocketVolumeName), podRequest.VhostUserSocketName)
 		} else {
 			podNicName = ifName

@@ -9,6 +9,7 @@ import (
 	"github.com/kubeovn/kube-ovn/pkg/request"
 )
 
+// 这个结构包括原始的 CNI 结构（types.NetConf)
 type netConf struct {
 	types.NetConf
 	ServerSocket string          `json:"server_socket"`

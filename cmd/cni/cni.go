@@ -29,6 +29,7 @@ func CmdMain() {
 }
 
 func cmdAdd(args *skel.CmdArgs) error {
+	// QUESTION: 为什么命令可以传递 kube-ovn 相关的信息呢？比如 dpdk socket 的位置。
 	netConf, cniVersion, err := loadNetConf(args.StdinData)
 	if err != nil {
 		return err
